@@ -239,7 +239,6 @@ class LoggerFactory implements FactoryInterface {
     			break;
 
 
-
     		default:
 
     			// Only writers defined above are currently supported

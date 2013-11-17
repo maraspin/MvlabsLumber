@@ -165,6 +165,20 @@ class LoggerFactoryTest extends \PHPUnit_Framework_TestCase {
 
 
     /**
+     * Logger is configured to write/rotate to an unwritable file
+     *
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage Can not continue writing to
+     */
+    public function testWrongFileLocationRotatingFileWriter() {
+
+    	$this->I_factory = new LoggerFactory();
+    	$this->I_factory->createService($this->getMockSM());
+
+    }
+
+
+    /**
      * Writer is configured with a not existing level
      *
      * @expectedException \OutOfRangeException

@@ -214,7 +214,6 @@ class MockConfigs {
     							'min_severity' => 'notice',
     							'days_kept' => 10,
     						),
-
     				),
     			    'channels' => array(
     			    	'default' => array(
@@ -226,6 +225,7 @@ class MockConfigs {
     										'couchdb',
     										'phplog',
     										'syslog',
+    										'rotatingfile',
     								),
     						),
     				),
@@ -254,12 +254,39 @@ class MockConfigs {
 	    	'channels' => array(
 	    		'default' => array(
 	    			'writers' => array(
-	    				'default'
+	    				'default',
 	    			),
 	    		),
 	    	),
     	),
 	);
+
+
+    /**
+     * Valid file writer configuration, but file is not writable
+     * @var array Lumber configuration
+     */
+    protected $am_wrongFileLocationRotatingFileWriter = array (
+
+    	'lumber' => array(
+
+    		'writers' => array(
+    			'default' => array(
+    				'type' => 'rotatingfile',
+    	    		'destination' => '/tmp/idontthinkthisdirectoryexists/shameifitdoes',
+    	    		'min_severity' => 'info',
+    			),
+    		),
+
+    		'channels' => array(
+    			'default' => array(
+    				'writers' => array(
+    					'default',
+    				),
+    			),
+    		),
+    	),
+    );
 
 
     /**
