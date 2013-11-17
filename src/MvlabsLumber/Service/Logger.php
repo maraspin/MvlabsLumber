@@ -82,19 +82,17 @@ class Logger implements LoggerInterface {
 	/**
 	 * Tells whether level param is valid
 	 *
-	 * @param mixed $m_level Level to be evaluated
+	 * @param mixed $m_level Severity Level to be evaluated
 	 * @return boolean Is level valid?
 	 */
 	public static function isValidSeverityLevel($m_level) {
 
 		$am_validLevels = self::getSeverityLevels();
-
-		// If an invalid operator is specified, an Exception is thrown
-		if (in_array($m_level,$am_validLevels)) {
-			return true;
+		if (!in_array($m_level,$am_validLevels)) {
+			return false;
 		}
 
-		return false;
+		return true;
 
 	}
 
