@@ -16,6 +16,7 @@ use Zend\EventManager\EventManagerInterface;
 use Zend\ServiceManager\ServiceManager;
 use MvlabsLumber\Service\LoggerFactory;
 use MvlabsLumber\Service\Logger;
+use MvlabsLumber\Service\Channel;
 use PHPUnit_Framework_TestCase;
 use MvlabsLumber;
 
@@ -32,9 +33,9 @@ class LoggerTest extends \PHPUnit_Framework_TestCase {
 
 
     /**
-     * @var \Monolog\Handler\NullHandler
+     * @var Channel
      */
-    protected $I_mockMonologLogger;
+    protected $I_mockChannel;
 
 
     /**
@@ -42,7 +43,7 @@ class LoggerTest extends \PHPUnit_Framework_TestCase {
      */
     protected function setUp() {
 
-        $this->I_mockMonologLogger =  \Mockery::mock('Monolog\Logger');
+        $this->I_mockChannel =  \Mockery::mock('MvlabsLumber\Service\Channel');
     	$this->I_logger = new Logger();
 
     }
@@ -56,7 +57,7 @@ class LoggerTest extends \PHPUnit_Framework_TestCase {
 
     	// Default channel is added
     	$s_channelName = 'default';
-    	$this->I_logger->addChannel($s_channelName, $this->I_mockMonologLogger);
+    	$this->I_logger->addChannel($s_channelName, $this->I_mockChannel);
     	$this->assertArrayHasKey($s_channelName, $this->I_logger->getChannels());
 
     }
@@ -68,13 +69,13 @@ class LoggerTest extends \PHPUnit_Framework_TestCase {
      */
     public function tryGettingChannelByExistingName() {
 
-        $this->I_logger->addChannel('second',$this->I_mockMonologLogger);
-        $this->I_mockMonologLogger->shouldReceive("getName")->andReturn("second");
+        $this->I_logger->addChannel('second',$this->I_mockChannel);
+        $this->I_mockChannel->shouldReceive("getName")->andReturn("second");
 
         $I_channel = $this->I_logger->getChannel('second');
         $s_channelName = $I_channel->getName();
 
-        $this->assertInstanceOf("Monolog\Logger", $I_channel);
+        $this->assertInstanceOf("MvlabsLumber\Service\Channel", $I_channel);
         $this->assertEquals($s_channelName, 'second');
     }
 
@@ -86,8 +87,8 @@ class LoggerTest extends \PHPUnit_Framework_TestCase {
      */
     public function tryGettingChannelByNonExistentName() {
 
-        $this->I_logger->addChannel('second',$this->I_mockMonologLogger);
-        $this->I_mockMonologLogger->shouldReceive("getName")->andReturn("second");
+        $this->I_logger->addChannel('second',$this->I_mockChannel);
+        $this->I_mockChannel->shouldReceive("getName")->andReturn("second");
 
        $this->I_logger->getChannel('default');
 
@@ -106,8 +107,8 @@ class LoggerTest extends \PHPUnit_Framework_TestCase {
 		$this->assertEmpty($I_logger->getChannels());
 
 		// Default channel is added
-		$I_logger->addChannel('default', $this->I_mockMonologLogger);
-		$I_logger->addChannel('second', $this->I_mockMonologLogger);
+		$I_logger->addChannel('default', $this->I_mockChannel);
+		$I_logger->addChannel('second', $this->I_mockChannel);
 
 		// getChannels is tested
 		$aI_channels = $I_logger->getChannels();
@@ -116,15 +117,15 @@ class LoggerTest extends \PHPUnit_Framework_TestCase {
 		$I_default = $aI_channels['default'];
 		$I_second = $aI_channels['second'];
 
-		$this->assertInstanceOf("Monolog\Logger", $I_default);
-		$this->assertInstanceOf("Monolog\Logger", $I_second);
+		$this->assertInstanceOf("MvlabsLumber\Service\Channel", $I_default);
+		$this->assertInstanceOf("MvlabsLumber\Service\Channel", $I_second);
 
 		// getChannel is tested
 		$I_defaultDirect = $I_logger->getChannel('default');
 		$I_secondDirect = $I_logger->getChannel('second');
 
-		$this->assertInstanceOf("Monolog\Logger", $I_defaultDirect);
-		$this->assertInstanceOf("Monolog\Logger", $I_secondDirect);
+		$this->assertInstanceOf("MvlabsLumber\Service\Channel", $I_defaultDirect);
+		$this->assertInstanceOf("MvlabsLumber\Service\Channel", $I_secondDirect);
 
     }
 
@@ -142,10 +143,10 @@ class LoggerTest extends \PHPUnit_Framework_TestCase {
 
     	// Default channel is added
     	$s_channelName = 'default';
-    	$I_logger->addChannel($s_channelName, $this->I_mockMonologLogger);
+    	$I_logger->addChannel($s_channelName, $this->I_mockChannel);
 
     	// Second channel is added
-    	$I_logger->addChannel('second', $this->I_mockMonologLogger);
+    	$I_logger->addChannel('second', $this->I_mockChannel);
 
     	$this->assertCount(2, $I_logger->getChannels());
     	$this->assertArrayHasKey($s_channelName, $I_logger->getChannels());
@@ -189,6 +190,7 @@ class LoggerTest extends \PHPUnit_Framework_TestCase {
     	// Default channel is removed
     	$I_logger->removeChannel('default');
 
+
     }
 
 
@@ -211,63 +213,64 @@ class LoggerTest extends \PHPUnit_Framework_TestCase {
     	$s_messageToLog = 'Message Sent';
 
     	// Default channel is added
-    	$I_logger->addChannel('default', $this->I_mockMonologLogger);
+    	$I_logger->addChannel('default', $this->I_mockChannel);
+    	$this->I_mockChannel->shouldReceive('getFilters')->andReturn('null');
 
     	// Simplest situation, default values
-    	$this->I_mockMonologLogger->shouldReceive('addRecord')->with(250, $s_messageToLog, array())->once();
-    	$I_logger->log($s_messageToLog);
+    	$this->I_mockChannel->shouldReceive('log')->with(200, $s_messageToLog, array())->once()->andReturn(true);
+    	$I_logger->log('info', $s_messageToLog);
 
     	// Debug
-    	$this->I_mockMonologLogger->shouldReceive('addRecord')->with(100, $s_messageToLog, array())->between(3,3);
-    	$I_logger->log($s_messageToLog, 'debug');
-    	$I_logger->log($s_messageToLog, Logger::DEBUG);
+    	$this->I_mockChannel->shouldReceive('log')->with(100, $s_messageToLog, array())->between(3,3);
+    	$I_logger->log('debug', $s_messageToLog);
+    	$I_logger->log(Logger::DEBUG, $s_messageToLog);
     	$I_logger->debug($s_messageToLog);
 
     	// Info
-    	$this->I_mockMonologLogger->shouldReceive('addRecord')->with(200, $s_messageToLog, array())->between(3,3);
-    	$I_logger->log($s_messageToLog, 'info');
-    	$I_logger->log($s_messageToLog, Logger::INFO);
+    	$this->I_mockChannel->shouldReceive('log')->with(200, $s_messageToLog, array())->between(3,3);
+    	$I_logger->log('info', $s_messageToLog);
+    	$I_logger->log(Logger::INFO, $s_messageToLog);
     	$I_logger->info($s_messageToLog);
 
     	// Notice
-    	$this->I_mockMonologLogger->shouldReceive('addRecord')->with(250, $s_messageToLog, array())->between(3,3);
-    	$I_logger->log($s_messageToLog, 'notice');
-    	$I_logger->log($s_messageToLog, Logger::NOTICE);
+    	$this->I_mockChannel->shouldReceive('log')->with(250, $s_messageToLog, array())->between(3,3);
+    	$I_logger->log('notice', $s_messageToLog);
+    	$I_logger->log(Logger::NOTICE, $s_messageToLog);
     	$I_logger->notice($s_messageToLog);
 
     	// Warning
-    	$this->I_mockMonologLogger->shouldReceive('addRecord')->with(300, $s_messageToLog, array())->between(3,3);
-    	$I_logger->log($s_messageToLog, 'warning');
-    	$I_logger->log($s_messageToLog, Logger::WARNING);
+    	$this->I_mockChannel->shouldReceive('log')->with(300, $s_messageToLog, array())->between(3,3);
+    	$I_logger->log('warning', $s_messageToLog);
+    	$I_logger->log(Logger::WARNING, $s_messageToLog);
     	$I_logger->warning($s_messageToLog);
 
     	// Error
-    	$this->I_mockMonologLogger->shouldReceive('addRecord')->with(400, $s_messageToLog, array())->between(3,3);
-    	$I_logger->log($s_messageToLog, 'error');
-    	$I_logger->log($s_messageToLog, Logger::ERROR);
+    	$this->I_mockChannel->shouldReceive('log')->with(400, $s_messageToLog, array())->between(3,3);
+    	$I_logger->log('error', $s_messageToLog);
+    	$I_logger->log(Logger::ERROR, $s_messageToLog);
     	$I_logger->error($s_messageToLog);
 
     	// Critical
-    	$this->I_mockMonologLogger->shouldReceive('addRecord')->with(500, $s_messageToLog, array())->between(3,3);
-    	$I_logger->log($s_messageToLog, 'critical');
-    	$I_logger->log($s_messageToLog, Logger::CRITICAL);
+    	$this->I_mockChannel->shouldReceive('log')->with(500, $s_messageToLog, array())->between(3,3);
+    	$I_logger->log('critical', $s_messageToLog);
+    	$I_logger->log(Logger::CRITICAL, $s_messageToLog);
     	$I_logger->critical($s_messageToLog);
 
     	// Alert
-    	$this->I_mockMonologLogger->shouldReceive('addRecord')->with(550, $s_messageToLog, array())->between(3,3);
-    	$I_logger->log($s_messageToLog, 'alert');
-    	$I_logger->log($s_messageToLog, Logger::ALERT);
+    	$this->I_mockChannel->shouldReceive('log')->with(550, $s_messageToLog, array())->between(3,3);
+    	$I_logger->log('alert', $s_messageToLog);
+    	$I_logger->log(Logger::ALERT, $s_messageToLog);
     	$I_logger->alert($s_messageToLog);
 
     	// Emergency
-    	$this->I_mockMonologLogger->shouldReceive('addRecord')->with(600, $s_messageToLog, array())->between(3,3);
-    	$I_logger->log($s_messageToLog, 'emergency');
-    	$I_logger->log($s_messageToLog, Logger::EMERGENCY);
+    	$this->I_mockChannel->shouldReceive('log')->with(600, $s_messageToLog, array())->between(3,3);
+    	$I_logger->log('emergency', $s_messageToLog);
+    	$I_logger->log(Logger::EMERGENCY, $s_messageToLog);
     	$I_logger->emergency($s_messageToLog);
 
 		// Context Passed along
-    	$this->I_mockMonologLogger->shouldReceive('addRecord')->with(200, $s_messageToLog, array('user' => 'steve'));
-    	$this->I_logger->log($s_messageToLog, 'info', array('user' => 'steve'));
+    	$this->I_mockChannel->shouldReceive('log')->with(200, $s_messageToLog, array('user' => 'steve'));
+    	$this->I_logger->log('info', $s_messageToLog, array('user' => 'steve'));
 
     }
 
@@ -284,8 +287,8 @@ class LoggerTest extends \PHPUnit_Framework_TestCase {
     	$I_logger = $this->I_logger;
 
     	// Default channel is added
-    	$I_logger->addChannel('default', $this->I_mockMonologLogger);
-    	$I_logger->log("Won't be logged anyways", 'notExistingSeverityLevel');
+    	$I_logger->addChannel('default', $this->I_mockChannel);
+    	$I_logger->log('notExistingSeverityLevel', "Won't be logged anyways");
 
     }
 

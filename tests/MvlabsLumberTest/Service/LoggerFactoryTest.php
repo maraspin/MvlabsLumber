@@ -249,6 +249,31 @@ class LoggerFactoryTest extends \PHPUnit_Framework_TestCase {
 
 
     /**
+     * Verbosity is set to false
+     */
+    public function testVerbosityFalse() {
+
+    	$this->I_factory = new LoggerFactory();
+    	$this->I_factory->createService($this->getMockSM());
+
+    }
+
+
+    /**
+     * Invalid sources have been specified for a certain channel
+     *
+     * @expectedException \UnexpectedValueException
+     * @expectedExceptionMessage sources parameter in channels configuration is not an array
+     */
+    public function testInvalidSources() {
+
+    	$this->I_factory = new LoggerFactory();
+    	$this->I_factory->createService($this->getMockSM());
+
+    }
+
+
+    /**
      * Multiple channels are created
      */
     public function testMultipleChannels() {

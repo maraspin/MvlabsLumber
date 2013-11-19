@@ -135,6 +135,34 @@ class MockConfigs {
 	);
 
 
+    /**
+     * Verbosity set
+     * @var array Lumber configuration
+     */
+    protected $am_verbosityFalse = array (
+
+    		'lumber' => array(
+
+    				'writers' => array(
+    						'default' => array(
+    								'type' => 'file',
+    								'destination' => '/tmp/test.log',
+    								'min_severity' => 'info',
+    								'verbose' => false
+    						),
+    				),
+
+    				'channels' => array(
+    						'default' => array(
+    								'writers' => array(
+    										'default'
+    								),
+    						),
+    				),
+
+    		),
+
+    );
 
     /**
      * Working FirePHP writer configuration
@@ -423,11 +451,44 @@ class MockConfigs {
   					'writers' => array(
   						'second',
   					),
+  					'sources' => array('event-kind'),
   				),
   			),
   		),
 
   	);
+
+
+
+  	/**
+  	 * Invalid Sources
+  	 * @var array Lumber configuration
+  	 */
+  	protected $am_invalidSources = array (
+
+  			'lumber' => array(
+
+  					'writers' => array(
+  							'default' => array(
+  									'type' => 'file',
+  									'destination' => '/tmp/test.log',
+  									'min_severity' => 'info',
+  							),
+  					),
+
+  					'channels' => array(
+  							'default' => array(
+  									'writers' => array(
+  											'default'
+  									),
+  									'sources' => 'unexpected'
+  							),
+  					),
+
+  			),
+
+  	);
+
 
 
 	/**
