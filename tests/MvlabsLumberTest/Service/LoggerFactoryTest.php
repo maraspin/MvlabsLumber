@@ -14,7 +14,7 @@ namespace MvlabsLumberTest;
 
 use PHPUnit_Framework_TestCase;
 use MvlabsLumber\Service\LoggerFactory;
-use MvlabsLumberTest\Service\MockConfigs\MockConfigs;
+use MvlabsLumberTest\MockConfigs\MockConfigs;
 
 
 class LoggerFactoryTest extends \PHPUnit_Framework_TestCase {

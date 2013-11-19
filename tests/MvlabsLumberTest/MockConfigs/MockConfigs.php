@@ -10,7 +10,7 @@
  * @package   MvlabsLumber
  */
 
-namespace MvlabsLumberTest\Service\MockConfigs;
+namespace MvlabsLumberTest\MockConfigs;
 
 class MockConfigs {
 
