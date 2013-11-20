@@ -25,5 +25,5 @@ if (file_exists('vendor/autoload.php')) {
 $loader->add('MvlabsLumberTest',__DIR__.DIRECTORY_SEPARATOR."tests");
 
 if (!$config = @include 'configuration.php') {
-    $config = require 'TestConfiguration.php.dist';
+    $config = require 'tests/config/TestConfiguration.php.dist';
 }
