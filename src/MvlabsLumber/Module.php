@@ -82,129 +82,140 @@ class Module {
 
 		// Do we need to do something at all?
 		if(!array_key_exists('lumber', $am_config) ||
-		   !array_key_exists('events', $am_config['lumber'])) {
+		   !array_key_exists('sources', $am_config['lumber'])) {
 			return;
 		}
 
-		$am_events = $am_config['lumber']['events'];
+		$am_sources = $am_config['lumber']['sources'];
 
-		foreach ($am_events as $s_eventName => $am_eventInfo) {
+		foreach ($am_sources as $s_sourceName => $am_sourceInfo) {
 
-			$am_eventConf = $this->getEventInfo($am_eventInfo);
-			list($s_target, $s_event, $s_severity, $b_verbose) = $am_eventConf;
+			$am_eventConf = $this->getEventInfo($am_sourceInfo);
+			// list($s_target, $am_registeredEvents, $s_severity, $b_verbose) = $am_eventConf;
 
 			// Check for problems upon app initialization, rather than when event is triggered
-			if (!$I_lumber->isValidSeverityLevel($s_severity)) {
-				throw new \InvalidArgumentException('Severity ' . $s_severity . ' is invalid');
+			if (!$I_lumber->isValidSeverityLevel($am_eventConf['severity'])) {
+				throw new \InvalidArgumentException('Severity ' . $am_eventConf['severity'] . ' is invalid');
 			}
 
 			$I_request = $I_sm->get('Request');
-			\Zend\EventManager\StaticEventManager::getInstance()->attach($s_target, $s_event,
-			// $I_sharedManager->attach($s_target, $s_event,
-					                 function($I_event) use ($I_lumber, $I_request, $am_eventInfo, $am_eventConf) {
 
-			    list($s_target, $s_event, $s_severity, $b_verbose) = $am_eventConf;
+			foreach ($am_eventConf['events'] as $s_event) {
 
-				$s_message = '';
+				\Zend\EventManager\StaticEventManager::getInstance()->attach($am_eventConf['target'], $s_event,
+				function($I_event) use ($I_lumber, $I_request, $s_sourceName, $am_sourceInfo, $am_eventConf) {
 
-				if ($I_event instanceof \Zend\EventManager\Event) {
+				    // list($s_target, $am_events, $s_severity, $b_verbose) = $am_eventConf;
 
-					$s_target = $I_event->getTarget();
-					$s_name = $I_event->getName();
-					$am_params = $I_event->getParams();
+					$s_message = '';
 
-					$am_additionalInfo = array();
-					$as_messages = array();
+					if ($I_event instanceof \Zend\EventManager\Event) {
 
-					$s_requestUri = $I_request->getUriString();
-					$am_additionalInfo['request'] = $s_requestUri;
+						$s_target = $I_event->getTarget();
+						$s_name = $I_event->getName();
+						$am_params = $I_event->getParams();
 
-					$s_queryParams = json_encode($I_request->getQuery());
-					$am_additionalInfo['query_params'] = $s_queryParams;
+						$am_additionalInfo = array('lumber-source' => $s_sourceName);
+						$as_messages = array();
 
-					$s_postParams = json_encode($I_request->getPost());
-					$am_additionalInfo['post_params'] = $s_postParams;
+						if ($am_eventConf['log_url_request']) {
+							$s_requestUri = $I_request->getUriString();
+							$am_additionalInfo['request'] = $s_requestUri;
+						}
 
-					if (array_key_exists('message', $am_params)) {
-						$as_messages[] = $am_params['message'];
-					}
+						if ($am_eventConf['log_request_params']) {
+							$s_queryParams = json_encode($I_request->getQuery());
+							$am_additionalInfo['query_params'] = $s_queryParams;
 
-					// Exceptions need to be made human readable
-					if (array_key_exists('exception', $am_params) &&
-					    $am_params['exception'] instanceof \Exception) {
+							$s_postParams = json_encode($I_request->getPost());
+							$am_additionalInfo['post_params'] = $s_postParams;
+						}
 
-						$I_exception = $am_params['exception'];
-						do {
+						if (array_key_exists('message', $am_params)) {
+							$as_messages[] = $am_params['message'];
+						}
 
-							$as_messages[] = $I_exception->getMessage();
+						// Exceptions need to be made human readable
+						if (array_key_exists('exception', $am_params) &&
+						    $am_params['exception'] instanceof \Exception) {
 
-							// Shall we also include exception traces?
-							if($b_verbose) {
-								$am_traces = $I_exception->getTrace();
-								foreach ($am_traces as $am_trace) {
+							$I_exception = $am_params['exception'];
+							do {
 
-									$s_tempMessage = 'Error';
-									$as_toCheck = array('file', 'line', 'class', 'method');
-									foreach ($as_toCheck as $s_check) {
-										$s_tempMessage .= (array_key_exists($s_check, $am_trace)?' '.$s_check.': '.$am_trace[$s_check]:'');
+								$as_messages[] = $I_exception->getMessage();
+
+								// Shall we also include exception traces?
+								if($am_eventConf['log_exception_trace']) {
+									$am_traces = $I_exception->getTrace();
+									foreach ($am_traces as $am_trace) {
+
+										$s_tempMessage = 'Error';
+										$as_toCheck = array('file', 'line', 'class', 'method');
+										foreach ($as_toCheck as $s_check) {
+											$s_tempMessage .= (array_key_exists($s_check, $am_trace)?' '.$s_check.': '.$am_trace[$s_check]:'');
+										}
+
+										$as_messages[] = $s_tempMessage;
 									}
-
-									$as_messages[] = $s_tempMessage;
 								}
+
 							}
+							while($I_exception = $I_exception->getPrevious());
 
 						}
-						while($I_exception = $I_exception->getPrevious());
+					}	// Is Event an instance of \Zend\EventManager\Event?
 
+					$am_additionalInfo['event'] = $s_name;
+
+					if ($am_eventConf['log_target_object']) {
+						$am_additionalInfo['target'] = $s_target;
 					}
-				}
 
-				$am_additionalInfo['event'] = $s_event;
-				$am_additionalInfo['target'] = $s_target;
+					$am_additionalInfo['log_lumber_source'] = $am_eventConf['log_lumber_source'];
 
-				foreach ($as_messages as $s_message) {
-					$I_lumber->log($s_message, $s_severity, $am_additionalInfo);
-				}
+					foreach ($as_messages as $s_message) {
+						$I_lumber->log($am_eventConf['severity'], $s_message, $am_additionalInfo);
+					}
 
-			});
+				});
+
+			}
 
 		}	// Foreach
 	}
 
 
 	/**
-	 * Support function extracting configuration event information
+	 * Support function extracting all event configuration information
 	 *
 	 * @param array event configuration record $am_eventInfo
 	 * @return array configured event info record
 	 */
 	private function getEventInfo(array $am_eventInfo) {
 
-		// Target is taken care of - empty means everything
-		if (!array_key_exists('target', $am_eventInfo)) {
-			$am_eventInfo['target'] = '*';
-		}
-		$s_target = $am_eventInfo['target'];
+		$am_defaultParams = array('target' => '*',
+				                  'events' => '*',
+				                  'severity' => 'notice',
+				                  'log_lumber_source' => false,
+				                  'log_request_params' => false,
+				                  'log_url_request' => false,
+				                  'log_exception_trace' => false,
+		                          'log_target_object' => false,
+				                  'log_lumber_source' => false
+		);
 
-		// Event is also taken care of - empty again is everything
-		if (!array_key_exists('event',$am_eventInfo)) {
-			$am_eventInfo['event'] = '*';
+		foreach ($am_defaultParams as $s_paramName => $m_defaultValue) {
+			if (!array_key_exists($s_paramName, $am_eventInfo)) {
+				$am_eventInfo[$s_paramName] = $m_defaultValue;
+			}
+			$s_severity = $am_eventInfo[$s_paramName];
 		}
-		$s_event = $am_eventInfo['event'];
 
-		// If no severity is specified, notice is used as default
-		if (!array_key_exists('severity', $am_eventInfo)) {
-			$am_eventInfo['severity'] = 'notice';
+		if ('*' == $am_eventInfo['events']) {
+			$am_eventInfo['events'] = array('*');
 		}
-		$s_severity = $am_eventInfo['severity'];
 
-		// If no severity is specified, notice is used as default
-		if (!array_key_exists('verbose', $am_eventInfo)) {
-			$am_eventInfo['verbose'] = false;
-		}
-		$b_verbose = $am_eventInfo['verbose'];
-
-		return array($s_target, $s_event, $s_severity, $b_verbose);
+		return $am_eventInfo;
 
 	}
 

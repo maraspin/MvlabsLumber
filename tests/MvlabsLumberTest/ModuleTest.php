@@ -45,50 +45,6 @@ class ModuleTest extends PHPUnit_Framework_TestCase {
 
 	}
 
-	/*
-	public function base() {
-
-		$am_lumberConfig = include __DIR__ . "/../../config/module.config.php";
-
-		//$I_mockLumber->shouldReceive('isValidSeverityLevel')->with('default')->once()->andReturn(true);
-		//$I_mockSM->shouldReceive('get')->with('MvlabsLumber\Service\Logger')->once()->andReturn($I_mockLumber);
-		// $I_application->shouldReceive('getServiceManager')->andReturn($I_mockSM);
-
-
-		$this->I_module->onBootstrap($this->I_event);
-
-		/*
-		$applicationEventManager = new EventManager();
-
-		$application = $this->getMock('Zend\Mvc\ApplicationInterface');
-		$application
-		->expects($this->any())
-		->method('getEventManager')
-		->will($this->returnValue($applicationEventManager));
-
-		$event = new Event();
-		$event->setTarget($application);
-
-		$module = new Module();
-		$module->onBootstrap($event);
-		*/
-
-
-		/*
-		$dispatchListeners = $applicationEventManager->getListeners(MvcEvent::EVENT_DISPATCH_ERROR);
-
-		foreach ($dispatchListeners as $listener) {
-			$metaData = $listener->getMetadata();
-			$callback = $listener->getCallback();
-
-			$this->assertEquals('onDispatch', $callback[1]);
-			$this->assertEquals(-9999999, $metaData['priority']);
-			$this->assertTrue($callback[0] instanceof Module);
-
-		}
-
-	}
-	*/
 
 	public function testOnBootstrapWithEmptyConf() {
 
@@ -109,7 +65,7 @@ class ModuleTest extends PHPUnit_Framework_TestCase {
 
 		$am_lumberConfig = include __DIR__ . "/../../config/module.config.php";
 
-		$am_lumberConfig['lumber']['events']['testevent'] = array('verbose' => true);
+		$am_lumberConfig['lumber']['sources']['testevent'] = array('verbose' => true);
 
 		// $I_event->shouldReceive('setTarget');
 		$I_application = $this->getMockApp($am_lumberConfig);
@@ -125,11 +81,8 @@ class ModuleTest extends PHPUnit_Framework_TestCase {
 		try {
 			throw new \Exception('Test Exception');
 		} catch(\Exception $I_e) {
-			$I_em->trigger('invocato', $this, array('message' => 'Test Message', 'exception' => $I_e));
+			$I_em->trigger('invocato', $this, array('message' => 'An Exception Has Been Thrown!', 'exception' => $I_e));
 		}
-
-		// $I_em = $this->getMock('Zend\\EventManager\\EventManagerInterface');
-		// $I_em->expects($this->once())->method('trigger')->with(...);
 
 	}
 
@@ -142,7 +95,7 @@ class ModuleTest extends PHPUnit_Framework_TestCase {
 
 		$am_lumberConfig =  array(
 				'lumber' => array(
-						'events' => array(
+						'sources' => array(
 								'application_errors' => array('event' => MvcEvent::EVENT_DISPATCH_ERROR,
 								                      'severity' => 'SOMETHING_NOT_EXISTING',
 													  'verbose' => true,
@@ -204,6 +157,7 @@ class ModuleTest extends PHPUnit_Framework_TestCase {
 		// Working configuration
 		$I_mockLumber->shouldReceive('isValidSeverityLevel')->with('alert')->andReturn(true);
 		$I_mockLumber->shouldReceive('isValidSeverityLevel')->with('notice')->andReturn(true);
+		$I_mockLumber->shouldReceive('isValidSeverityLevel')->with('warning')->andReturn(true);
 		$I_mockLumber->shouldReceive('isValidSeverityLevel')->with('SOMETHING_NOT_EXISTING')->andReturn(false);
 
 		$I_mockLumber->shouldReceive('log')->andReturn(true);

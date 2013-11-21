@@ -89,7 +89,19 @@ class LoggerFactory implements FactoryInterface {
 		// Channels and writers are registered for this logger
 		foreach ($am_loggerConf['channels'] as $s_channelName => $am_channelInfo) {
 
-			$I_channel = new Monolog($s_channelName);
+			if (array_key_exists('sources', $am_channelInfo) &&
+			    !is_null($am_channelInfo['sources']) &&
+			    !is_array($am_channelInfo['sources'])) {
+				throw new \UnexpectedValueException('sources parameter in channels configuration is not an array');
+			}
+
+			$as_filter = null;
+			if (array_key_exists('sources', $am_channelInfo)) {
+				$as_filter = $am_channelInfo['sources'];
+			}
+
+			$I_channel = new Channel($s_channelName);
+			$I_channel->setFilters($as_filter);
 
 			foreach ($am_channelInfo['writers'] as $s_writerName) {
 
@@ -139,9 +151,11 @@ class LoggerFactory implements FactoryInterface {
 
 		// Is minimum logging level valid?
     	$s_logAbove = $am_writerConf['min_severity'];
-    	if (!Logger::isValidSeverityLevel($s_logAbove)) {
+       	if (!Logger::isValidSeverityLevel($s_logAbove)) {
     		throw new \OutOfRangeException('Invalid logging level ' . $s_logAbove . ' for writer ' . $s_writerName);
     	}
+
+    	$i_logAbove = constant('Monolog\Logger'.'::'.strtoupper($s_logAbove));
 
     	// Has user set whether event shall propagate to other writers in the stack?
     	$b_bubble = $this->getOptionalParam('propagate', $am_writerConf);
@@ -162,19 +176,19 @@ class LoggerFactory implements FactoryInterface {
     				throw new \InvalidArgumentException('Can not continue writing to ' . $s_filePath . ' in writer ' . $s_writerName . ' of type ' . $am_writerConf['type'] . ' in Lumber configuration');
     			}
 
-    			$I_writer = new StreamHandler($am_writerConf["destination"], $s_logAbove, $b_bubble);
+    			$I_writer = new StreamHandler($am_writerConf["destination"], $i_logAbove, $b_bubble);
     			break;
 
 
     		case 'firephp':
 
-    			$I_writer = new FirePHPHandler($s_logAbove, $b_bubble);
+    			$I_writer = new FirePHPHandler($i_logAbove, $b_bubble);
     			break;
 
 
     		case 'chromephp':
 
-    			$I_writer = new ChromePHPHandler($s_logAbove, $b_bubble);
+    			$I_writer = new ChromePHPHandler($i_logAbove, $b_bubble);
     			break;
 
 
@@ -188,14 +202,14 @@ class LoggerFactory implements FactoryInterface {
     				$am_options = $am_writerConf['options'];
     			}
 
-    			$I_writer = new CouchDBHandler($am_options, $s_logAbove, $b_bubble);
+    			$I_writer = new CouchDBHandler($am_options, $i_logAbove, $b_bubble);
 
     			break;
 
 
     		case 'phplog':
 
-    			$I_writer = new ErrorLogHandler($s_logAbove, $b_bubble);
+    			$I_writer = new ErrorLogHandler(0, $i_logAbove, $b_bubble);
     			break;
 
 
@@ -211,7 +225,7 @@ class LoggerFactory implements FactoryInterface {
     				$s_facility = $am_writerConf['facility'];
     			}
 
-    			$I_writer = new SyslogHandler($s_ident, $s_facility, $s_logAbove, $b_bubble, LOG_PID);
+    			$I_writer = new SyslogHandler($s_ident, $s_facility, $i_logAbove, $b_bubble, LOG_PID);
     			break;
 
 
@@ -229,13 +243,13 @@ class LoggerFactory implements FactoryInterface {
     				$i_maxFiles = $am_writerConf['days_kept'];
     			}
 
-    			$I_writer = new RotatingFileHandler($am_writerConf["destination"], $i_daysKept, $s_logAbove, $b_bubble);
+    			$I_writer = new RotatingFileHandler($am_writerConf["destination"], $i_daysKept, $i_logAbove, $b_bubble);
     			break;
 
 
     		case 'zendmonitor':
 
-    			$I_writer = new ZendMonitorHandler($s_logAbove, $b_bubble);
+    			$I_writer = new ZendMonitorHandler($i_logAbove, $b_bubble);
     			break;
 
 

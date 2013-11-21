@@ -13,11 +13,11 @@
  * @package   MvlabsLumber
  */
 
-
 namespace MvlabsLumber\Service;
 
 use Monolog\Logger as Monolog;
 use Psr\Log\LoggerInterface;
+
 
 class Logger implements LoggerInterface {
 
@@ -41,7 +41,7 @@ class Logger implements LoggerInterface {
 	/**
 	 * Messages are sent to these channels
 	 *
-	 * @var array $aI_channels logger channels
+	 * @var array Logger channels
 	 */
 	private $aI_channels = array();
 
@@ -66,11 +66,11 @@ class Logger implements LoggerInterface {
 	/**
 	 * Lists available logging severity levels
 	 *
-	 * @return array
+	 * @return array severity levels
 	 */
 	public static function getSeverityLevels() {
 
-		// @TODO: needs to be replaced if new constants are introduced within the class
+		// @FIXME: needs to be replaced if new constants are introduced within the class
 		$I_ref = new \ReflectionClass(__CLASS__);
 		$am_levels = $I_ref->getConstants();
 
@@ -82,7 +82,7 @@ class Logger implements LoggerInterface {
 	/**
 	 * Tells whether level param is valid
 	 *
-	 * @param mixed $m_level Severity Level to be evaluated
+	 * @param string Severity Level to be evaluated
 	 * @return boolean Is level valid?
 	 */
 	public static function isValidSeverityLevel($m_level) {
@@ -103,7 +103,7 @@ class Logger implements LoggerInterface {
 	 * @param string $s_channelName Channel name
 	 * @param Monolog\Logger $I_channel Monolog Logger instance
 	 */
-	public function addChannel($s_channelName, Monolog $I_channel) {
+	public function addChannel($s_channelName, Channel $I_channel) {
 		$this->aI_channels[$s_channelName] = $I_channel;
 	}
 
@@ -156,16 +156,23 @@ class Logger implements LoggerInterface {
      * @param array $am_context Message context - IE Additional information
      * @return null
      */
-    public function log($s_message, $s_level = 'notice', array $am_context = array()) {
+    public function log($s_level, $s_message, array $am_context = array()) {
+
+    	$b_returnValue = false;
 
     	if (!$this->isValidSeverityLevel($s_level)) {
     		throw new \OutOfRangeException('Severity level ' . $s_level . ' is invalid and can not be used');
     	}
 
     	foreach ($this->aI_channels as $s_channelName => $I_channel) {
-    		$I_channel->addRecord($this->as_monologLevels[$s_level], $s_message, $am_context);
+    		$b_guard = $I_channel->log($this->as_monologLevels[$s_level], $s_message, $am_context);
+    		if ($b_guard) {
+    			$b_returnValue = true;
+    		}
     	}
 
+    	// Logging has happened at least once
+    	return $b_returnValue;
     }
 
 
@@ -180,7 +187,7 @@ class Logger implements LoggerInterface {
      * @return null
 	 */
 	public function emergency($s_message, array $am_context = array()) {
-		$this->log($s_message, self::EMERGENCY, $am_context);
+		$this->log(self::EMERGENCY, $s_message, $am_context);
 	}
 
 
@@ -195,7 +202,7 @@ class Logger implements LoggerInterface {
      * @return null
      */
     public function alert($s_message, array $am_context = array()) {
-    	$this->log($s_message, self::ALERT, $am_context);
+    	$this->log(self::ALERT, $s_message, $am_context);
     }
 
 
@@ -209,7 +216,7 @@ class Logger implements LoggerInterface {
      * @return null
      */
     public function critical($s_message, array $am_context = array()) {
-    	$this->log($s_message, self::CRITICAL, $am_context);
+    	$this->log(self::CRITICAL, $s_message, $am_context);
     }
 
 
@@ -222,7 +229,7 @@ class Logger implements LoggerInterface {
      * @return null
      */
     public function error($s_message, array $am_context = array()) {
-    	$this->log($s_message, self::ERROR, $am_context);
+    	$this->log(self::ERROR, $s_message, $am_context);
     }
 
 
@@ -237,7 +244,7 @@ class Logger implements LoggerInterface {
      * @return null
      */
     public function warning($s_message, array $am_context = array()) {
-    	$this->log($s_message, self::WARNING, $am_context);
+    	$this->log(self::WARNING, $s_message, $am_context);
     }
 
 
@@ -249,7 +256,7 @@ class Logger implements LoggerInterface {
      * @return null
      */
     public function notice($s_message, array $am_context = array()) {
-    	$this->log($s_message, self::NOTICE, $am_context);
+    	$this->log(self::NOTICE, $s_message, $am_context);
     }
 
 
@@ -263,7 +270,7 @@ class Logger implements LoggerInterface {
      * @return null
      */
     public function info($s_message, array $am_context = array()) {
-    	$this->log($s_message, self::INFO, $am_context);
+    	$this->log(self::INFO, $s_message, $am_context);
     }
 
 
@@ -275,7 +282,7 @@ class Logger implements LoggerInterface {
      * @return null
      */
     public function debug($s_message, array $am_context = array()) {
-    	$this->log($s_message, self::DEBUG, $am_context);
+    	$this->log(self::DEBUG, $s_message, $am_context);
     }
 
 
