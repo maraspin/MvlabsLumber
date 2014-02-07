@@ -95,7 +95,7 @@ class LoggerFactory implements FactoryInterface {
 				throw new \UnexpectedValueException('sources parameter in channels configuration is not an array');
 			}
 
-			$as_filter = null;
+			$as_filter = array();
 			if (array_key_exists('sources', $am_channelInfo)) {
 				$as_filter = $am_channelInfo['sources'];
 			}
