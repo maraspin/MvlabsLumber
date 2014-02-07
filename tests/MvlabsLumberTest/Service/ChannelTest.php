@@ -62,10 +62,12 @@ class ChannelTest extends \PHPUnit_Framework_TestCase {
      */
     public function setAddRemoveFilters() {
 
-    	$this->assertNull($this->I_channel->getFilters());
+    	$this->assertEmpty($this->I_channel->getFilters());
+
     	$this->I_channel->setFilters(array('test'));
     	$this->assertCount(1, $this->I_channel->getFilters());
     	$this->assertTrue(in_array('test',$this->I_channel->getFilters()));
+
     	$this->I_channel->addFilter('test2');
     	$this->assertCount(2, $this->I_channel->getFilters());
     	$this->assertTrue(in_array('test',$this->I_channel->getFilters()));
@@ -75,10 +77,12 @@ class ChannelTest extends \PHPUnit_Framework_TestCase {
     	$this->assertTrue(in_array('test',$this->I_channel->getFilters()));
     	$this->assertTrue(in_array('test2',$this->I_channel->getFilters()));
     	$this->assertTrue($this->I_channel->removeFilterIfPresent('test'));
+
     	$this->assertCount(1, $this->I_channel->getFilters());
     	$this->assertTrue(in_array('test2',$this->I_channel->getFilters()));
     	$this->assertTrue($this->I_channel->removeFilter('test2'));
-    	$this->assertNull($this->I_channel->getFilters());
+
+    	$this->assertCount(0, $this->I_channel->getFilters());
 
     }
 
@@ -91,10 +95,8 @@ class ChannelTest extends \PHPUnit_Framework_TestCase {
      * @test
      */
     public function removeNotExistingFilter() {
-
-    	$this->assertNull($this->I_channel->getFilters());
+    	$this->assertEmpty($this->I_channel->getFilters());
     	$this->I_channel->removeFilter('test2');
-
     }
 
 
@@ -107,13 +109,14 @@ class ChannelTest extends \PHPUnit_Framework_TestCase {
      */
     public function clearFilters() {
 
-    	$this->assertNull($this->I_channel->getFilters());
+    	$this->assertEmpty($this->I_channel->getFilters());
+
     	$this->I_channel->addFilter('test');
     	$this->assertCount(1, $this->I_channel->getFilters());
     	$this->assertTrue(in_array('test',$this->I_channel->getFilters()));
 
-    	$this->I_channel->setFilters(null);
-    	$this->assertNull($this->I_channel->getFilters());
+    	$this->I_channel->setFilters(array());
+    	$this->assertEmpty($this->I_channel->getFilters());
     }
 
 
